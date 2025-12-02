@@ -1,40 +1,33 @@
-const express = require('express')
+const express = require('express');
+const { Pool } = require("pg");
+const cors = requise("cors");
+
+
 const app = express()
-const bp = require('body-parser')
 
-app.use(bp.urlencoded())
-app.use(bp.json())
+app.use(express.json()) 
+app.use(express.urlencoded({ extended: true }))
 
-app.listen(7000, () => {
-    console.log("Servidor Aberto na Porta 7000")
-})
-app.post("/cadastro", (req, res) => {
-    console.log(req.body)
-    if (req.body.email != "admin@admin") {
-        res.send("Seja bem vindo ao seu perfil")
-    }
-     else {
-        res.send("usuario já existente!")
-     }
-    res.send("Obrigado por se Cadastrar!")
- 
-
-
-
+const pool = new Pool({
+    connectionString: 'postgresql://neondb_owner:npg_nrl0dpCFZc2G@ep-wild-bread-ad7oaxxh-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
+    ssl: { rejectUnauthorized: false }
 })
 
-app.post("/cadastrosenha", (req, res) => {
-    console.log(req.body)
-    if (req.body.senha != "admin") {
-        res.send("Seja bem vindo ao seu perfil")
-    }
-     else {
-        res.send("senha incorreta")
-     }
-    res.send(prompt("Obrigado por se Cadastrar!"))
- 
-
-
-
+app.listen(8080, () => {
+    console.log("o servidor foi aberto")
 })
 
+app.get("/usuarios", async (req, res)=>{
+    const result = await pool.query("SELECT * FROM users")
+    res.json(result.rows)
+})
+
+app.post("/usuarios", async(req, res)=>{
+    const { email } = req.body // exemplo de colunas
+
+    const result = await pool.query(
+      "INSERT INTO users (email) VALUES ($1) RETURNING *",
+      [email]
+    );
+    res.send("Obrigado pelo cadastro")
+})
